@@ -1,11 +1,12 @@
-import os					##allows us to run ping/hping3
-import json					##allows importing of json
+import os			##allows us to run ping/hping3
+import json			##allows importing of json
 from pprint import pprint  	##allows better readability from json
 
 
 ####the json file was created by the following aws cli command:
 ####aws ec2 describe-instances >> instances_info.json
 
+####also, hping3 is required to test for 443
 
 ##importing/reading the .json file
 with open('instances_info.json') as data_file:
@@ -32,7 +33,9 @@ while countOfInstances < numOfInstances:
 ##if you are like most people, ping will be disabled anyway
 for i in listOfInstances:
 	hostname = i
-	response = os.system("ping -c 1 -w2 " + hostname + " > /dev/null 2>&1") ##thanks Manuel, via http://stackoverflow.com/questions/2953462/pinging-servers-in-python . also, if it fails, pay attention to your spacing
+	response = os.system("ping -c 1 -w2 " + hostname + " > /dev/null 2>&1") 
+	##thanks Manuel, via http://stackoverflow.com/questions/2953462/pinging-servers-in-python
+	##also, if it fails, pay attention to your spacing
 	if response == 0:
 		print hostname, 'ping is up!'
 	else:
@@ -43,11 +46,12 @@ for i in listOfInstances:
 ##if in Kali, hping3 by default required to run via root
 for i in listOfInstances:
 	hostname = i
-	response = os.system("hping3 -S -p 443 -c 5 " + hostname + " > /dev/null 2>&1") ##if it fails, pay attention to your spacing
+	response = os.system("hping3 -S -p 443 -c 5 " + hostname + " > /dev/null 2>&1") 
+	##if it fails, pay attention to your spacing
 	if response == 0:
 		print hostname, '443 is up!'
 	else:
-		print hostname, '443 is down! try running as root'
+		print hostname, '443 is down! are you running hping3 as root?'
 
 ##just a few more printout examples
 print "Original Launch Date:", data["Reservations"][0]["Instances"][0]["LaunchTime"]
