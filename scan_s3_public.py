@@ -10,8 +10,9 @@ import json
 def main():
 
     BucketList = OpenBucketList()
+    CheckPublicStatus(BucketList)
     #AccessBucketURL(BucketList)
-    AccessBucketAWSCLI(BucketList)
+    #AccessBucketAWSCLI(BucketList)
 
 
 def OpenBucketList():
@@ -21,57 +22,66 @@ def OpenBucketList():
     return Buckets
 
 
-def AccessBucketURL(Buckets):
-
+def CheckPublicStatus(Buckets):
+    URLResults = {}
+    AWSResults = {}
     for i in Buckets:
         Bucket = i.strip()
-        #print(Bucket)
-        URL = "http://{}.s3.amazonaws.com".format(Bucket)
+        URLStatus = AccessBucketURL(Bucket)
+        AWSCLIStatus = AccessBucketAWSCLI(Bucket)
 
+        URLResults[Bucket] = URLStatus
+        AWSResults[Bucket] = AWSCLIStatus
+
+    print("URL Status: \n")
+    for key, value in URLResults.items():
+        print(key, value)
+    print("\n\nAWS CLI Status: \n:")
+    for key, value in AWSResults.items():
+        print(key, value)
+
+def AccessBucketURL(Bucket):
+        URL = "http://{}.s3.amazonaws.com".format(Bucket)
         Response = requests.get(URL)
+
         try:
-            GetXMLIfValid(Bucket, Response)
+            return(GetXMLIfValid(Bucket, Response))
+
         except:
-            GetPageContentIfValid(Bucket, Response)
+            return("Open")
+            #return(GetPageContentIfValid(Bucket, Response))
+
+
 
 
 def GetXMLIfValid(Bucket, Response):
     tree = etree.fromstring(Response.content)
     node = tree.find('Message')
     print("{} - {} - {}".format(Bucket, tree.tag, node.text))
+    return(node.text)
 
 
 
 def GetPageContentIfValid(Bucket, Response):
     print("{} - success?".format(Bucket))
+    return "success"
 
 
 
-def AccessBucketAWSCLI(Buckets):
-    Success = []
-    Failure = []
-    Commands = []
-    for i in Buckets:
-        Bucket = i.strip()
-        Profile = "backup"
-        Command = ['aws', '--profile', '{}'.format(Profile), 's3api', 'list-objects', '--bucket', '{}'.format(Bucket)]#.format(Profile, Bucket)
+def AccessBucketAWSCLI(Bucket):
+    Profile = "backup"
+    Command = ['aws', '--profile', '{}'.format(Profile), 's3api', 'list-objects', '--bucket', '{}'.format(Bucket)]#.format(Profile, Bucket)
 
-        Result = subprocess.Popen(Command, stdout=subprocess.PIPE)
-        Output = Result.stdout.read().decode("utf-8")
-        print(Output)
-        try:
-            if Output[0] == "{":
-                Success.append(Bucket)
-        except:
-
-            Failure.append(Bucket)
-        Commands.append(Bucket)
-
-    print("\n\n\n")
-    print("Successful Attempts - Open Access:")
-    print(Success)
-    print("Failed Attempts - Access Denied:")
-    print(Failure)
+    Result = subprocess.Popen(Command, stdout=subprocess.PIPE)
+    Output = Result.stdout.read().decode("utf-8")
+    print(Output)
+    try:
+        if Output[0] == "{":
+            return "Open"
+        else:
+            return "Access Denied"
+    except:
+        return "Access Denied"
 
 
 if __name__ == main():
