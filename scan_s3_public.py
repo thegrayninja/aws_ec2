@@ -11,12 +11,10 @@ def main():
 
     BucketList = OpenBucketList()
     CheckPublicStatus(BucketList)
-    #AccessBucketURL(BucketList)
-    #AccessBucketAWSCLI(BucketList)
 
 
 def OpenBucketList():
-    with open("bucket_list.txt", "r") as BucketFile:
+    with open("bhnprod_buckets.txt", "r") as BucketFile:
         Buckets = BucketFile.readlines()
 
     return Buckets
@@ -25,20 +23,33 @@ def OpenBucketList():
 def CheckPublicStatus(Buckets):
     URLResults = {}
     AWSResults = {}
+    AWSUploadResults = {}
     for i in Buckets:
         Bucket = i.strip()
         URLStatus = AccessBucketURL(Bucket)
         AWSCLIStatus = AccessBucketAWSCLI(Bucket)
+        AWSUploadStatus = AttemptToSave(Bucket)
 
         URLResults[Bucket] = URLStatus
         AWSResults[Bucket] = AWSCLIStatus
+        AWSUploadResults[Bucket] = AWSUploadStatus
 
     print("URL Status: \n")
     for key, value in URLResults.items():
-        print(key, value)
+        if value == "Open":
+            print(key, value)
+
     print("\n\nAWS CLI Status: \n:")
     for key, value in AWSResults.items():
-        print(key, value)
+        if value == "Open":
+            print(key, value)
+
+    print("\n\nAWS CLI Upload Status: \n:")
+    for key, value in AWSUploadResults.items():
+        if value == "Open":
+            print(key, value)
+
+
 
 def AccessBucketURL(Bucket):
         URL = "http://{}.s3.amazonaws.com".format(Bucket)
@@ -69,10 +80,10 @@ def GetPageContentIfValid(Bucket, Response):
 
 
 def AccessBucketAWSCLI(Bucket):
-    Profile = "backup"
+    Profile = "dev"
     Command = ['aws', '--profile', '{}'.format(Profile), 's3api', 'list-objects', '--bucket', '{}'.format(Bucket)]#.format(Profile, Bucket)
 
-    Result = subprocess.Popen(Command, stdout=subprocess.PIPE)
+    Result = subprocess.Popen(Command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     Output = Result.stdout.read().decode("utf-8")
     print(Output)
     try:
@@ -82,6 +93,23 @@ def AccessBucketAWSCLI(Bucket):
             return "Access Denied"
     except:
         return "Access Denied"
+
+
+def AttemptToSave(Bucket):
+    Profile = "dev"
+    Command = ['aws', '--profile', '{}'.format(Profile), 's3', 'cp', '.\\test123abc.txt', 's3://{}/'.format(Bucket)]
+
+    Result = subprocess.Popen(Command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    Output = Result.stdout.read().decode("utf-8")
+    print(Output)
+    try:
+        if "failed" in Output:
+            print("upload failed")
+            return "Access Denied"
+        else:
+            return "Open"
+    except:
+        return "Open"
 
 
 if __name__ == main():
