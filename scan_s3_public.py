@@ -14,7 +14,7 @@ def main():
 
 
 def OpenBucketList():
-    with open("bhnprod_buckets.txt", "r") as BucketFile:
+    with open("list_of_buckets.txt", "r") as BucketFile:
         Buckets = BucketFile.readlines()
 
     return Buckets
