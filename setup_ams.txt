@@ -1,0 +1,44 @@
+Steps (as of 2017):
+
+1: Create IAM Role
+2: IAM > Roles
+3: Create New Role
+4: Select Role Type:
+	AWS Service Role > Amazon EC2
+5: Attach a Policy
+	AmazonSSMFulAccess
+6: Give Role Name
+	MySSMRole
+7: Click Create Role
+8: Launch Instance using SSM Role
+9: Go to EC2 Dashboard
+10: Launch Instance
+11: IAM Role > Select MySSMRole
+12: Advanced Details > User Data:
+	#!/bin/bash
+	mkdir /tmp/ssm
+	cd /tmp/ssm
+	wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+	sudo dpkg -i amazon-ssm-agent.deb
+
+
+
+
+13: Go to EC2 
+14: Go to Systems Manager Services > Run Command
+15: Select RunLinuxShellScript
+16: Select Instances
+17: Commands: 
+sudo apt-get update -y 
+sudo apt-get upgrade -y
+sudo apt-get install apache2 -y
+sudo ufw allow 'Apache Full'
+sudo mv /var/www/html/index.html /var/www/html/old.html
+sudo echo "This is my Apache Web Server" > /var/www/html/index.html
+sudo systemctl start apache2
+
+
+
+note, can perform the above commands with this cli script:
+
+aws ssm send-command --document-name "AWS-RunShellScript" --instance-ids "i-060109211f50178a6" --parameters '{"commands":["apt install httpd -y","echo \"This is my Apache Web Server\" > /var/www/html/index.html","/etc/init.d/httpd start"],"executionTimeout":["3600"]}' --timeout-seconds 600 --region us-west-1
