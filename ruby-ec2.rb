@@ -32,33 +32,39 @@ def GetInstanceInfo(ec2)
     data += "#{counter.to_s} || "
     data += "#{i.id} || "
     data += "#{i.state.name} || "
-    #puts "State_Code: #{i.state.code}"
+
     data += "#{i.key_name} || "
     data += "#{i.public_ip_address} ||"
-    # data += i.tags.to_s
-    # i.tags.to_json
+
     i.tags.each do |tags|
       data += "#{tags['key']}:#{tags['value']} "
     end
-    instance_data[counter] = i.id
 
+    instance_data[counter] = i.id
     puts data
     counter += 1
-
-    #puts "Tag_Key: #{i.tags}"
-    #puts "Tag_Value: #{i.tags.value}"
-
   end
+
   return instance_data
 end
+
 
 def ChangeEC2State(instance_data)
   puts "Would you like to start up a machine? [y/n]"
   print "> "
-  user_response_start = $stdin.gets.chomp.to_i
-  #puts user_response_start
-  puts "Starting Instance: #{instance_data[user_response_start]}"
-  #puts "ERROR: #{instance_data}"
+  user_response_start = $stdin.gets.chomp
+
+  if user_response_start == "y"
+    puts "Please enter the row number you'd like to spin up [ie, 1]"
+    print "> "
+    user_response_id = $stdin.gets.chomp.to_i
+    if user_response_id == 0
+      puts "You fool, that's a character...not a number! Try again."
+      ChangeEC2State(instance_data)
+    else
+      puts "Starting Instance: #{instance_data[user_response_id]}"
+    end
+  end
 end
 
 
