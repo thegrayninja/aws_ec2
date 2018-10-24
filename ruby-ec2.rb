@@ -10,8 +10,8 @@ require 'json'
 def Main()
   puts "thanks for turning me on"
   ec2 = SetupEC2Instance()
-  GetInstanceInfo(ec2)
-  data = "data_not_accurate"
+  data = GetInstanceInfo(ec2)
+  #data = "data_not_accurate"
   ChangeEC2State(data)
   puts "i hope you are satisfied"
 end
@@ -26,6 +26,7 @@ end
 
 def GetInstanceInfo(ec2)
   counter = 1
+  instance_data = Hash.new
   ec2.instances.each do |i|
     data = ""
     data += "#{counter.to_s} || "
@@ -39,6 +40,7 @@ def GetInstanceInfo(ec2)
     i.tags.each do |tags|
       data += "#{tags['key']}:#{tags['value']} "
     end
+    instance_data[counter] = i.id
 
     puts data
     counter += 1
@@ -47,14 +49,16 @@ def GetInstanceInfo(ec2)
     #puts "Tag_Value: #{i.tags.value}"
 
   end
+  return instance_data
 end
 
 def ChangeEC2State(instance_data)
   puts "Would you like to start up a machine? [y/n]"
   print "> "
-  user_response_start = $stdin.gets.chomp
-  puts user_response_start
-  puts "ERROR: #{instance_data}"
+  user_response_start = $stdin.gets.chomp.to_i
+  #puts user_response_start
+  puts "Starting Instance: #{instance_data[user_response_start]}"
+  #puts "ERROR: #{instance_data}"
 end
 
 
