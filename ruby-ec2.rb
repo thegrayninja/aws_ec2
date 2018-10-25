@@ -80,7 +80,7 @@ def ChangeEC2State(instance_data, ec2)
   print "> "
   user_response_stop = $stdin.gets.chomp
 
-  if user_response_stop = "y"
+  if user_response_stop == "y"
     puts "Please enter the row number you'd like to STOP [ie, 1]"
     print "> "
     user_response_id = $stdin.gets.chomp.to_i
