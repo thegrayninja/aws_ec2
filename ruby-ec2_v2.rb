@@ -24,10 +24,10 @@ end
 
 
 class GetInstanceData
-  def initialize(awsRegion)
+  def initialize(connString)
     #@instancetype = "ec2"
     @awsRegion = awsRegion
-    @ec2connstring = Aws::EC2::Resource.new(region: @awsRegion)
+    @ec2 = connString
   end
 
   attr_reader :awsRegion
@@ -37,7 +37,7 @@ class GetInstanceData
     @counter = 1
     @instance_data = Hash.new
 
-    @ec2connstring.instances.each do |i|
+    @ec2.instances.each do |i|
       @data = ""
       @data += "#{@counter.to_s} || "
       @data += "#{i.id} || "
@@ -62,38 +62,69 @@ class GetInstanceData
 end
 
 class EC2
-  def start(instance_id, ec2connstring)
+  def initialize(instance_id, connString)
     @instance_id = instance_id
-    @ec2 = ec2
-    i = @ec2.instance(@instance_id)
-    if i.exists?
-      case i.state.code
+    @ec2 = connString
+  end
+
+  # attr_reader :instance_id
+  # attr_reader :ec2connstring
+
+  def start
+    #@instance_id = instance_id
+    #@ec2 = ec2
+    id = @ec2.instance(@instance_id)
+    if id.exists?
+      case id.state.code
       when 0  # pending
         puts "#{@instance_id} is pending, so it will be running in a bit"
       when 16  # started
-        puts "#{@instance_id} is already started"
+        puts "#{@instance_id} has already started"
       when 48  # terminated
         puts "#{@instance_id} is terminated, so you cannot start it"
       else
-        i.start
+        id.start
       end
     end
   end
 
-  def stop(instance_id, ec2)
-    @instance_id = instance_id
-    @ec2 = ec2
-    i = ec2.instance(instance_id)
-    if i.exists?
-      case i.state.code
+  def stop
+    #@instance_id = instance_id
+    #@ec2 = ec2
+    id = @ec2.instance(@instance_id)
+    if id.exists?
+      case id.state.code
       when 48  # terminated
-        puts "#{instance_id} is terminated, so you cannot stop it"
+        puts "#{@instance_id} is terminated, so you cannot stop it"
       when 64  # stopping
-        puts "#{instance_id} is stopping, so it will be stopped in a bit"
+        puts "#{@instance_id} is stopping, so it will be stopped in a bit"
       when 80  # stopped
-        puts "#{instance_id} is already stopped"
+        puts "#{@instance_id} is already stopped"
       else
-        i.stop
+        id.stop
+      end
+    end
+  end
+
+  def state
+    #@instance_id = instance_id
+    #@ec2 = ec2
+    puts @instance_id
+    id = @ec2.instance(@instance_id)
+    if id.exists?
+      case id.state
+      when 0  # pending
+        puts "#{@instance_id} is pending, so it will be running in a bit"
+      when 16  # started
+        puts "#{@instance_id} has already started"
+      when 48  # terminated
+        puts "#{@instance_id} is terminated, so you cannot stop it"
+      when 64  # stopping
+        puts "#{@instance_id} is stopping, so it will be stopped in a bit"
+      when 80  # stopped
+        puts "#{@instance_id} is stopped"
+      else
+        puts id.state
       end
     end
   end
@@ -103,31 +134,40 @@ end
 
 def RunProgram()
   uswest1 = AWSSetup.new
-  puts uswest1.awsRegion
   uswest1.set('us-west-1')
-  puts uswest1.awsRegion
+  connString = uswest1.ec2connstring
 
-  myEc2Instances = GetInstanceData.new(uswest1.awsRegion)
+  myEc2Instances = GetInstanceData.new(connString)
   myEc2Instances.info
   instances = myEc2Instances.instance_data
   puts instances
+  test1 = instances[1]
+  puts "\n#{test1}"
 
-  puts "\nWould you like to power ON an instance? [y/n]"
-  print "> "
-  response = $stdin.gets.chomp()
-  puts response
-  if response == "y"
-    puts "Please enter number associated with instance:"
-    print("> ")
-    response = $stdin.gets.chomp()
-    puts instances[response.to_i]
-  else
-    puts "ok, things will stay the same"
-  end
-  puts "\nWould you like to power OFF an instance? [y/n]"
-  print "> "
-  response = $stdin.gets.chomp()
-  puts response
+  testinstance1 = EC2.new(test1, connString)
+  puts testinstance1.state
+  puts testinstance1.stop
+  puts testinstance1.state
+  # puts "\nWould you like to power ON an instance? [y/n]"
+  # print "> "
+  # response = $stdin.gets.chomp()
+  # puts response
+  # if response == "y"
+  #   puts "Please enter number associated with instance:"
+  #   print("> ")
+  #   response = $stdin.gets.chomp()
+  #   instanceID = instances[response.to_i]
+  #   instance_test1 = EC2.new(instances[instanceID], uswest1.awsRegion)
+  #   puts instance_test1.state
+  #   #instanceState = myEc2Instances.state
+  #   #puts instanceState(instances[response.to_i], )
+  # else
+  #   puts "ok, things will stay the same"
+  # end
+  # puts "\nWould you like to power OFF an instance? [y/n]"
+  # print "> "
+  # response = $stdin.gets.chomp()
+  # puts response
 
   #myEc2Instances.GetInstanceInfo
 
